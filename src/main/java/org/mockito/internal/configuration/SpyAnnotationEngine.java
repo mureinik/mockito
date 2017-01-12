@@ -89,7 +89,12 @@ public class SpyAnnotationEngine implements AnnotationEngine, org.mockito.config
         if (type.isInterface()) {
             return Mockito.mock(type, settings.useConstructor());
         }
-        if (!Modifier.isStatic(type.getModifiers())) {
+        int typeModifiers = type.getModifiers();
+        if (Modifier.isPrivate(typeModifiers)) {
+            throw new MockitoException("@Spy annotation can only initialize non private inner classes declared in the test. "
+                                       + "Inner class: '" + type.getSimpleName() + "'.");
+        }
+        if (!Modifier.isStatic(typeModifiers)) {
             Class<?> enclosing = type.getEnclosingClass();
             if (enclosing != null) {
                 if (!enclosing.isInstance(testInstance)) {

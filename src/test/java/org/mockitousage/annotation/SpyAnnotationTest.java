@@ -10,9 +10,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
@@ -36,13 +34,10 @@ public class SpyAnnotationTest extends TestBase {
     final List<String> spiedList = new ArrayList<String>();
 
     @Spy
-    NestedClassWithNoArgConstructor staticTypeWithNoArgConstructor;
+    InnerStaticClassWithNoArgConstructor staticTypeWithNoArgConstructor;
 
     @Spy
-    NestedClassWithoutDefinedConstructor staticTypeWithoutDefinedConstructor;
-
-    @Rule
-    public final ExpectedException shouldThrow = ExpectedException.none();
+    InnerStaticClassWithoutDefinedConstructor staticTypeWithoutDefinedConstructor;
 
     @Test
     public void should_init_spy_by_instance() throws Exception {
@@ -175,7 +170,7 @@ public class SpyAnnotationTest extends TestBase {
     }
 
     @Test
-    public void should_report_when_encosing_instance_is_needed() throws Exception {
+    public void should_report_when_enclosing_instance_is_needed() throws Exception {
         class Outer {
             class Inner {
             }
@@ -192,14 +187,45 @@ public class SpyAnnotationTest extends TestBase {
         }
     }
 
-    static class NestedClassWithoutDefinedConstructor {
+    @Test
+    public void should_report_private_inner_not_supported() throws Exception {
+        try {
+            MockitoAnnotations.initMocks(new WithInnerPrivateStaticAbstract());
+            fail();
+        } catch (MockitoException e) {
+            assertThat(e).hasMessageContaining("@Spy annotation can only initialize non private inner classes declared in the test").hasMessageContaining("InnerPrivateStaticAbstract");
+        }
+        try {
+            MockitoAnnotations.initMocks(new WithInnerPrivateAbstract());
+            fail();
+        } catch (MockitoException e) {
+            assertThat(e).hasMessageContaining("@Spy annotation can only initialize non private inner classes declared in the test").hasMessageContaining("InnerPrivateAbstract");
+        }
     }
 
-    static class NestedClassWithNoArgConstructor {
-        NestedClassWithNoArgConstructor() {
+    static class WithInnerPrivateStaticAbstract {
+        @Spy
+        private InnerPrivateStaticAbstract strength;
+
+        private static abstract class InnerPrivateStaticAbstract {
+        }
+    }
+    static class WithInnerPrivateAbstract {
+        @Spy
+        private InnerPrivateAbstract strength;
+
+        private abstract class InnerPrivateAbstract {
+        }
+    }
+
+    static class InnerStaticClassWithoutDefinedConstructor {
+    }
+
+    static class InnerStaticClassWithNoArgConstructor {
+        InnerStaticClassWithNoArgConstructor() {
         }
 
-        NestedClassWithNoArgConstructor(String f) {
+        InnerStaticClassWithNoArgConstructor(String f) {
         }
     }
 
